@@ -1,7 +1,215 @@
-<html>
-	<head>
-	</head>
-	<body>
-		Project 1 here
-	</body>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+<head>
+<style>
+  body {
+    padding: 100px;
+    width: 1000px;
+    margin: auto;
+    text-align: left;
+    font-weight: 300;
+    font-family: 'Open Sans', sans-serif;
+    color: #121212;
+  }
+  h1, h2, h3, h4 {
+    font-family: 'Source Sans Pro', sans-serif;
+  }
+</style>
+<title>CS 184 Rasterizer</title>
+<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+<link href="https://fonts.googleapis.com/css?family=Open+Sans|Source+Sans+Pro" rel="stylesheet">
+</head>
+
+
+<body>
+
+<h1 align="middle">CS 184: Computer Graphics and Imaging, Spring 2018</h1>
+<h1 align="middle">Project 1: Rasterizer</h1>
+<h2 align="middle">David Wei, CS184-!!</h2>
+
+<br><br>
+
+<div>
+
+<h2 align="middle">Overview</h2>
+<p>In this project, I was given the opportunity to implement basic techniques in rasterizing triangles in order to display SVGs. The later tasks also expand on this basic rasterization formula to add interpolation between pixels/texels and also interpolation on mipmaps. I've learnt a lot building this project; there were many points of frustration with floats, but being able to see a successful end product offset the pain. I realized how much computation is required to render even the simplest of images and have a newfound respect for people who dedicate their lives to optimize and develop better ways to render images. Thank you GPU.</p>
+
+<h2 align="middle">Section I: Rasterization</h2>
+
+<h3 align="middle">Part 1: Rasterizing single-color triangles</h3>
+
+<p>I rasterize my single triangles by creating a bounded box around the triangle, and then iterating through each pixel in this bounded box. I apply the three line test in order to determine if the point is inside the triangle, and use the sign heuristic which @CeHao1 discussed on slide 50 of lecture 2 to determine counter/clockwise orientation. My algorithm cannot be worse than one that checks each pixel within the bounding box of the triangle because my algorithm will only check points within the bounded box that are also within bounds.</p>
+
+  <div align="middle">
+    <table style="width=100%">
+      <tr>
+        <td>
+          <img src="images/task1_test4.png" align="middle" width="400px"/>
+          <figcaption align="middle">basic/test4.svg</figcaption>
+        </td>
+      </tr>
+    </table>
+  </div>
+
+<!--<p>Here is an example 2x2 gridlike structure using an HTML table. Each <b>tr</b> is a row and each <b>td</b> is a column in that row. You might find this useful for framing and showing your result images in an organized fashion.</p>-->
+<!--  -->
+<!--<div align="middle">-->
+<!--  <table style="width=100%">-->
+<!--    <tr>-->
+<!--      <td>-->
+<!--        <img src="images/image1.png" align="middle" width="400px"/>-->
+<!--        <figcaption align="middle">Caption goes here.</figcaption>-->
+<!--      </td>-->
+<!--      <td>-->
+<!--        <img src="images/image2.png" align="middle" width="400px"/>-->
+<!--        <figcaption align="middle">Caption goes here.</figcaption>-->
+<!--      </td>-->
+<!--    </tr>-->
+<!--    <br>-->
+<!--    <tr>-->
+<!--      <td>-->
+<!--        <img src="images/image3.png" align="middle" width="400px"/>-->
+<!--        <figcaption align="middle">Caption goes here.</figcaption>-->
+<!--      </td>-->
+<!--      <td>-->
+<!--        <img src="images/image4.png" align="middle" width="400px"/>-->
+<!--        <figcaption align="middle">Caption goes here.</figcaption>-->
+<!--      </td>-->
+<!--    </tr>-->
+<!--  </table>-->
+<!--</div>-->
+
+<h3 align="middle">Part 2: Antialiasing triangles</h3>
+<p>I implemented supersampling by building on top of my original rasterization pipeline. Instead of treating every pixel as a single point to sample, I instead treated every pixel as a bounding box for sampling_rate number of pixels. In my algorithm, I loop through the pixel, sampling at each “subpixel” and filling in the subpixel appropriately in my modified sample_buffer. The sample_buffer is now width * height * sampling_rate, which gives it enough space for all the subpixels. I can then take this sample_buffer, loop through all the subpixels, and average together the subpixel values to generate a value to be written to the framebuffer. Supersampling is useful, since it allows us to collect more points to run our three-line-test through, giving us a more accurate sample for any given pixel. It also allows us to antialias. The original rasterization pipeline was strictly: “If the center of this pixel is within the triangle, then the whole pixel is within the triangle.” We know this to not be the case, thus supersampling allows us to sample a single pixel multiple times at different points and “blur” the color together before writing to the framebuffer.</p>
+  <div align="middle">
+    <table style="width=100%">
+      <tr>
+        <td>
+          <img src="images/task2_test4_sr1.png" align="middle" width="400px"/>
+          <figcaption align="middle">basic/test4.svg sr=1.</figcaption>
+        </td>
+        <td>
+          <img src="images/task2_test4_sr4.png" align="middle" width="400px"/>
+          <figcaption align="middle">basic/test4.svg sr=4</figcaption>
+        </td>
+      </tr>
+      <br>
+      <tr>
+        <td>
+          <img src="images/task2_test4_sr16.png" align="middle" width="400px"/>
+          <figcaption align="middle">basic/test4.svg sr=16</figcaption>
+        </td>
+      </tr>
+    </table>
+  </div>
+
+<h3 align="middle">Part 3: Transforms</h3>
+<p>Implementing the transforms were rather easy, as they were just populating the returned matrices with appropriate values. For my altered png, I made the robot dab. It is pog.</p>
+  <div align="middle">
+    <table style="width=100%">
+      <tr>
+        <td>
+          <img src="images/task3_my_robot.svg" align="middle" width="400px"/>
+          <figcaption align="middle">my_robot.svg dabbing</figcaption>
+        </td>
+      </tr>
+    </table>
+  </div>
+
+<h2 align="middle">Section II: Sampling</h2>
+
+<h3 align="middle">Part 4: Barycentric coordinates</h3>
+<p>The way I think about Barycentric coordinates is that they are coordinates which will “blend” together the values at the vertices of the triangle. The way that the coordinate takes on the blended value is relative to their distance from the vertices. For example, in the image, we see that points closer to the red vertex will be more red than a point closer to the green vertex. In theory, being perfectly centered between all three points will yield a value which is the “blend” of all three points’ values. I borrowed the below illustration from the lecture slides.</p>
+  <div align="middle">
+    <table style="width=100%">
+      <tr>
+        <td>
+          <img src="images/task4_barycentric.png" align="middle" width="400px"/>
+          <figcaption align="middle">barycentric visualization</figcaption>
+        </td>
+        <td>
+          <img src="images/task4_test7.png" align="middle" width="400px"/>
+          <figcaption align="middle">basic/test7.svg</figcaption>
+        </td>
+      </tr>
+    </table>
+  </div>
+
+<h3 align="middle">Part 5: "Pixel sampling" for texture mapping</h3>
+<p>Pixel sampling is a way to determine which pixel (or group of pixels) to use in calculating an appropriate sample color or texture. To perform texture mapping, I would find the appropriate texel which corresponded to the pixels in the regular domain, and perform pixel sampling on the texel location. Nearest pixel sampling is the most simple, you just “snap” your location to the nearest texel and use that color. Bilinear pixel sampling is slightly more complex, you take the average color of the 4 (or 2 or 1 depending on edge cases) texels around you. It is similar to finding the barycentric coordinate from task 4, except you are in a nicer grid setting.</p>
+<p>Overall, using bilinear pixel interpolation sampling results in a “smoother” image. There are less jaggies and the lines seem cleaner. The largest difference occurs when you have a smaller sample rate. Sampling at a higher rate will naturally smooth the image, so the difference between nearest pixel and bilinear pixel sampling at a higher supersampling rate is less dramatic than when the supersample rate is lower.</p>
+
+  <div align="middle">
+    <table style="width=100%">
+      <tr>
+        <td>
+          <img src="images/task5_nsr1.png" align="middle" width="400px"/>
+          <figcaption align="middle">nearest sr=1</figcaption>
+        </td>
+        <td>
+          <img src="images/task5_bsr1.png" align="middle" width="400px"/>
+          <figcaption align="middle">bilinear sr=1</figcaption>
+        </td>
+      </tr>
+      <br>
+      <tr>
+        <td>
+          <img src="images/task5_nsr16.png" align="middle" width="400px"/>
+          <figcaption align="middle">nearest sr=16</figcaption>
+        </td>
+        <td>
+          <img src="images/task5_bsr16.png" align="middle" width="400px"/>
+          <figcaption align="middle">bilinear sr=16</figcaption>
+        </td>
+      </tr>
+    </table>
+  </div>
+
+<h3 align="middle">Part 6: "Level sampling" with mipmaps for texture mapping</h3>
+<p>Level sampling is similar to how we do texel and pixel sampling, except now we are determining which level of our mipmap to use when grabbing texels. I implemented it using the explained method from the lecture, where we take the derivative of u and v with respect to x and y and calculate the largest distance, before taking the log base 2 of this value.</p>
+<p>In general, I found that the highest rate of supersampling typically is best at antialiasing when compared to the other techniques standalone. However, this can be computationally expensive and changing to bilinear pixel interpolation already gives decent improvements to antialiasing. The difference between pixel sampling and mipmap level sampling is also difficult to discern. They both seem to blur effectively, but the L_LINEAR created a remarkably good result. Slap pixel filtering on top of it and the blur becomes a bit too much. The most powerful way to antialias is to combine a high sample rate with trilinear filtering, but this is computationally expensive.</p>
+
+  <div align="middle">
+    <table style="width=100%">
+      <tr>
+        <td>
+          <img src="images/task6_0n.png" align="middle" width="400px"/>
+          <figcaption align="middle">L_ZERO, P_NEAREST</figcaption>
+        </td>
+        <td>
+          <img src="images/task6_0l.png" align="middle" width="400px"/>
+          <figcaption align="middle">L_ZERO, P_LINEAR</figcaption>
+        </td>
+      </tr>
+      <br>
+      <tr>
+        <td>
+          <img src="images/task6_nn.png" align="middle" width="400px"/>
+          <figcaption align="middle">L_NEAREST, P_NEAREST</figcaption>
+        </td>
+        <td>
+          <img src="images/task6_nl.png" align="middle" width="400px"/>
+          <figcaption align="middle">L_NEAREST, P_LINEAR</figcaption>
+        </td>
+      </tr>
+      <br>
+      <tr>
+        <td>
+          <img src="images/task6_ln.png" align="middle" width="400px"/>
+          <figcaption align="middle">L_LINEAR, P_NEAREST</figcaption>
+        </td>
+        <td>
+          <img src="images/task6_ll.png" align="middle" width="400px"/>
+          <figcaption align="middle">L_LINEAR, P_LINEAR</figcaption>
+        </td>
+      </tr>
+    </table>
+  </div>
+
+<!--<h2 align="middle">Section III: Art Competition</h2>-->
+<!--<p>If you are not participating in the optional art competition, don't worry about this section!</p>-->
+
+<!--<h3 align="middle">Part 7: Draw something interesting!</h3>-->
+
+</body>
 </html>
