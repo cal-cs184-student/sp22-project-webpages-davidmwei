@@ -1,7 +1,258 @@
-<html>
-	<head>
-	</head>
-	<body>
-		Project 2 here
-	</body>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+
+<head>
+  <style>
+    body {
+      padding: 100px;
+      width: 1000px;
+      margin: auto;
+      text-align: left;
+      font-weight: 300;
+      font-family: 'Open Sans', sans-serif;
+      color: #121212;
+    }
+
+    h1,
+    h2,
+    h3,
+    h4 {
+      font-family: 'Source Sans Pro', sans-serif;
+    }
+  </style>
+  <title>CS 184 Mesh Editor</title>
+  <meta http-equiv="content-type" content="text/html; charset=utf-8" />
+  <link href="https://fonts.googleapis.com/css?family=Open+Sans|Source+Sans+Pro" rel="stylesheet">
+</head>
+
+
+<body>
+
+  <h1 align="middle">CS 184: Computer Graphics and Imaging, Spring 2022</h1>
+  <h1 align="middle">Project 2: Mesh Editor</h1>
+  <h2 align="middle">Alina Wang & David Wei, CS184-!!</h2>
+
+  <br><br>
+
+  <div>
+
+    <h2 align="middle">Overview</h2>
+    <p>Give a high-level overview of what you implemented in this project. Think about what you've built as a whole.
+      Share your thoughts on what interesting things you've learned from completing the project.</p>
+
+    <h2 align="middle">Section I: Bezier Curves and Surfaces</h2>
+
+    <h3 align="middle">Part 1: Bezier curves with 1D de Casteljau subdivision</h3>
+    <p>De Casteljau’s algorithm locates a point on a line between two points using linear interpolation. Under recursion, de Casteljau’s algorithm will reduce all points generated into a single point, which the Bezier curve will travel through. For all possible values of t, which defines the linear interpolation constant, you can “trace” along the original points/lines and generate all points for which the Bezier curve will travel through.</p>
+
+    <div align="middle">
+      <table style="width=100%">
+        <tr>
+          <td>
+            <img src="assets/task1_curve3_0.png" align="middle" width="400px" />
+            <figcaption align="middle">curve3-step0</figcaption>
+          </td>
+          <td>
+            <img src="assets/task1_curve3_1.png" align="middle" width="400px" />
+            <figcaption align="middle">curve3-step1</figcaption>
+          </td>
+        </tr>
+        <br>
+        <tr>
+          <td>
+            <img src="assets/task1_curve3_2.png" align="middle" width="400px" />
+            <figcaption align="middle">curve3-step2</figcaption>
+          </td>
+          <td>
+            <img src="assets/task1_curve3_3.png" align="middle" width="400px" />
+            <figcaption align="middle">curve3-step3</figcaption>
+          </td>
+        </tr>
+        <br>
+        <tr>
+          <td>
+            <img src="assets/task1_curve3_4.png" align="middle" width="400px" />
+            <figcaption align="middle">curve3-step4</figcaption>
+          </td>
+          <td>
+            <img src="assets/task1_curve3_5.png" align="middle" width="400px" />
+            <figcaption align="middle">curve3-step5</figcaption>
+          </td>
+        </tr>
+        <br>
+        <tr>
+          <td>
+            <img src="assets/task1_curve3_complete.png" align="middle" width="400px" />
+            <figcaption align="middle">curve3-complete</figcaption>
+          </td>
+          <td>
+            <img src="assets/task1_curve3_variant.png" align="middle" width="400px" />
+            <figcaption align="middle">curve3-variant</figcaption>
+          </td>
+        </tr>
+      </table>
+    </div>
+
+
+    <h3 align="middle">Part 2: Bezier surfaces with separable 1D de Casteljau subdivision</h3>
+    <p>De Casteljau’s algorithm can be extended to Bezier surfaces by applying its recursive properties two-fold. First we calculate an intermediate collection of Bezier points, which correspond to a given “row” in our case, and apply de Casteljau’s algorithm on these points. This final point corresponds to the point on our final bezier surface, using the collection of control points and appropriate linear interpolation parameters u and v. </p>
+
+    <div align="middle">
+      <table style="width=100%">
+        <tr>
+          <td>
+            <img src="assets/task2_teapot.png" align="middle" width="400px" />
+            <figcaption align="middle">teapotg</figcaption>
+          </td>
+        </tr>
+
+      </table>
+    </div>
+
+    <h2 align="middle">Section II: Sampling</h2>
+
+    <h3 align="middle">Part 3: Average normals for half-edge meshes</h3>
+    <p>To find the normal vector of  a vertex, we calculated all the normal vectors of neighboring faces by taking the cross product of 2 vectors to find the normal of every face and summing together the normal vectors. Taking the cross product returns an area weighted normal vector so it is enough to use the results of the cross product when averaging between all neighboring normal vectors. Finally, we normalized the summed normal vectors in order to avg the final vertex normal vector. </p>
+
+    <div align="middle">
+      <table style="width=100%">
+        <tr>
+          <td>
+            <img src="assets/task3_teapot_with_shading.png" align="middle" width="400px" />
+            <figcaption align="middle">Teapot with Shading</figcaption>
+          </td>
+          <td>
+            <img src="assets/task3_teapot_without_shading.png" align="middle" width="400px" />
+            <figcaption align="middle">Teapot without Shading</figcaption>
+          </td>
+        </tr>
+      </table>
+    </div>
+
+    <h3 align="middle">Part 4: Half-edge flip</h3>
+    <p>To flip the edge of our triangle, we referenced a handy illustration from CMU. Fundamentally, all we needed to do was rearrange some pointers, and reset some of the neighbors for our half-edges. In order to minimize chances for bugs/errors, we rearranged the pointers and neighbors of every vertex, face, edge, and halfedge, even if this meant reassigning a pointer back to where it was pointing originally. </p>
+    <div align="middle">
+      <table style="width=100%">
+        <tr>
+          <td>
+            <img src="assets/task4_teapot_flipped.png" align="middle" width="400px" />
+            <figcaption align="middle">teapot with original edges</figcaption>
+          </td>
+          <td>
+            <img src="assets/task4_teapot_original.png" align="middle" width="400px" />
+            <figcaption align="middle">teapot with a flipped edge</figcaption>
+          </td>
+        </tr>
+      </table>
+    </div>
+
+    <h3 align="middle">Part 5: Half-edge split</h3>
+    <p>Similar to part 4, we drew out the process of splitting an edge - mapping every new pointer for faces, vertices, halfedges and twins.
+      Having tracked where each new pointer goes, we created 15 new objects(faces, halfedges, vertices, etc) and reassigned existing and new object pointers respectively.
+    </p>
+
+    <p>
+      A common bug we ran into was the fact that our new vertex, in the middle of the split, was positioned at the origin. So every edge split resulted in a vertex shooting the middle of the teapot.
+      From reading Piazza, we realized it was because we didn't initialize the position of the new vertex so it was being default set to (0, 0, 0).
+      So we went back and initialized a position and that fixed everything.
+    </p>
+
+    <div align="middle">
+      <table style="width=100%">
+        <tr>
+          <td>
+            <img src="assets/task5_before.png" align="middle" width="400px" />
+            <figcaption align="middle">Teapot with no flips or splits</figcaption>
+          </td>
+        </tr>
+      </table>
+
+      <table>
+        <tr>
+          <td>
+            <img src="assets/task5_splits.png" align="middle" width="400px" />
+            <figcaption align="middle">teapot with a splits</figcaption>
+          </td>
+        </tr>
+      </table>
+      <table>
+        <tr>
+          <td>
+            <img src="assets/task5_splits_and_flips.png" align="middle" width="400px" />
+            <figcaption align="middle">teapot with splits and flips</figcaption>
+          </td>
+        </tr>
+      </table>
+    </div>
+
+
+    <h3 align="middle">Part 6: Loop subdivision for mesh upsampling</h3>
+    <p>We implemented loop subdivision exactly according to the spec, we first calculate where all the new vertices should go and store them inside of newPosition, then we split and flip edges and set the new positions. In order to debug, we used print debugging to ensure that the positions of vertices are expected (for example, a position of 0,0,0 was typically a red flag).</p>
+
+    <div align="middle">
+      <table style="width=100%">
+        <tr>
+          <td>
+            <img src="assets/task6_cube0.png" align="middle" width="400px" />
+            <figcaption align="middle">cube with no loop subdivision</figcaption>
+          </td>
+          <td>
+            <img src="assets/task6_cube1.png" align="middle" width="400px" />
+            <figcaption align="middle">cube with 1 loop subdivisions </figcaption>
+          </td>
+        </tr>
+        <tr>
+          <td>
+            <img src="assets/task6_cube2.png" align="middle" width="400px" />
+            <figcaption align="middle">cube with 2 loop subdivisions</figcaption>
+          </td>
+          <td>
+            <img src="assets/task6_cube3.png" align="middle" width="400px" />
+            <figcaption align="middle">cube with 3 loop subdivisions</figcaption>
+          </td>
+        </tr>
+        <tr>
+          <td>
+            <img src="assets/task6_cube4.png" align="middle" width="400px" />
+            <figcaption align="middle">cube with 4 loop subdivisions</figcaption>
+          </td>
+        </tr>
+      </table>
+    </div>
+
+    <p>While performing loop subdivisions, we noticed that sharp corners and edges tend to get squashed down / smoothed out, causing the mesh as a whole to get smaller. In order to minimize this, we pre-split corners; we know that the triangles touching a corner will be squashed down, so minimizing the size of the corner triangles will reduce the squashing. We support this idea with the following images. If you focus on the top left of the square, after loop subdivision you will notice that it maintains its shape much better than without preprocessing.
+
+    <div align="middle">
+      <table style="width=100%">
+        <tr>
+          <td>
+            <img src="assets/task6_cube0_p.png" align="middle" width="400px" />
+            <figcaption align="middle">cube with no loop subdivision, preprocessed</figcaption>
+          </td>
+          <td>
+            <img src="assets/task6_cube1_p.png" align="middle" width="400px" />
+            <figcaption align="middle">cube with 1 loop subdivisions, preprocessed</figcaption>
+          </td>
+        </tr>
+        <tr>
+          <td>
+            <img src="assets/task6_cube2_p.png" align="middle" width="400px" />
+            <figcaption align="middle">cube with 2 loop subdivisions, preprocessed</figcaption>
+          </td>
+          <td>
+            <img src="assets/task6_cube3_p.png" align="middle" width="400px" />
+            <figcaption align="middle">cube with 3 loop subdivisions, preprocessed</figcaption>
+          </td>
+        </tr>
+        <tr>
+          <td>
+            <img src="assets/task6_cube3_p_original.png" align="middle" width="400px" />
+            <figcaption align="middle">cube with 3 loop subdivisions, preprocessed, original view</figcaption>
+          </td>
+        </tr>
+      </table>
+    </div>
+
+</body>
+
 </html>
