@@ -1,7 +1,194 @@
-<html>
-	<head>
-	</head>
-	<body>
-		Project 3-2 here
-	</body>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+<head>
+<style>  
+    div.padded {  
+      padding-top: 0px;  
+      padding-right: 100px;  
+      padding-bottom: 0.25in;  
+      padding-left: 100px;  
+    }  
+  </style> 
+<title>Your Name  |  CS 184</title>
+<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+<link rel="stylesheet" type="text/css" href="style.css" media="screen" />
+</head>
+<body>
+<br />
+<h1 align="middle">Assignment 3-2: PathTracer</h1>
+    <h2 align="middle">David Wei, Alina Wang</h2>
+
+    <div class="padded">
+    <h2>Overview</h2>
+
+    <p> Overall, the project was pretty cool and fun compared to 3-1.
+        Our general approach was to follow along as closely to the spec as possible.
+        A lot of our errors or bugs were a result of us misinterpreting a small detail in the spec or not implementing something specified in spec.
+        For instance, we were getting a lot of black spots on our bunny and dragon in part 2. Sompetimes other pixelated colors also appeared.
+        This bug was a result of not validating wi and wo later in the function.
+        Because we validated it too early, pdf and wi were not appropriately assigned thus a whole layer of calculations was lacking.
+        Moreover, we referred a lot to piazza resources to help us debug and implement various parts that required more research!
+    </p>
+    <h2 align="middle">Part 1: Mirror and Glass Materials</h2>
+        <h3 align = "middle">Overview</h3>
+        <p>For part 1, we followed along to the specs specifications. And referenced the respective slides when necessary.
+
+        </p>
+
+        <table width="100%">
+            <tr align = "middle">
+                <td>
+                    <img src="images/spheres.png" width="300px" align="middle"/>
+                    <figcaption align="middle">spheres</figcaption>
+                </td>
+                <td>
+                    <img src="images/mirror_dragon.png" width="300px" align="middle"/>
+                    <figcaption align="middle">dragon (mirror)</figcaption>
+                </td>
+                <td>
+                    <img src="images/glass_lucy.png" width="300px" align="middle"/>
+                    <figcaption align="middle">lucy (glass)</figcaption>
+                </td>
+            </tr>
+        </table>
+
+        <p>In Part 1 we implemented the sampling for reflective (mirror) and refractive (glass) materials. We used the formulas included in the spec for all of our calculations. We did at one point run into a logic error where we accidentally swapped the reflection and refraction of rays when implementing the glass material. </p>
+        <div align="center">
+            <table width="100%">
+                <tr align ="middle">
+                    <td>
+                        <img src="images/spheres_0.png" width="300px" align="middle"/>
+                        <figcaption align="middle">0 ray bounces</figcaption>
+                    </td>
+                    <td>
+                        <img src="images/spheres_1.png" width="300px" align="middle"/>
+                        <figcaption align="middle">1 ray bounce</figcaption>
+                    </td>
+                    <td>
+                        <img src="images/spheres_2.png" width="300px" align="middle"/>
+                        <figcaption align="middle">2 ray bounces</figcaption>
+                    </td>
+                </tr>
+                <br>
+                <tr align="middle">
+                    <td>
+                        <img src="images/spheres_3.png" width="300px" align="middle"/>
+                        <figcaption align="middle">3 ray bounces</figcaption>
+                    </td>
+                    <td>
+                        <img src="images/spheres_4.png" width="300px" align="middle"/>
+                        <figcaption align="middle">4 ray bounces</figcaption>
+                    </td>
+                    <td>
+                        <img src="images/spheres_5.png" width="300px" align="middle"/>
+                        <figcaption align="middle">5 ray bounces</figcaption>
+                    </td>
+                </tr>
+                <tr align="middle">
+                    <td>
+                        <img src="images/spheres_100.png" width="300px" align="middle"/>
+                        <figcaption align="middle">100 ray bounces</figcaption>
+                    </td>
+                </tr>
+            </table>
+        </div>
+        <p>As you can observe above, when you increase the number of ray bounces, you will get a more photorealistic image which properly accounts for reflective and refractive properties of the spheres' materials.</p>
+        <p>It is expected that at 0-ray bounces we only see the light source (project 3-1) and on 1 ray bounce you only see the direct illumination of objects. It is interesting, however, going from 1-ray bounce to 2-ray bounces, that the reflection we see on the leftmost sphere becomes more apparent (a depth 2 ray would bounce from some other point onto our leftmost sphere). The rightmost sphere is still not as clear, however, which we suspect is due to less sampled rays hitting the rightmost sphere, which is refractive. </p>
+        <p>As we go from 2-ray bounces to 3-ray bounces, the image becomes even more clear, and even more so from 3-4 (we can actually see a nested reflection of the refractive sphere inside the reflective sphere!). As we increase the ray bounces more and more, the differences are harder to discern as we approach the stable "true" image.</p>
+
+
+
+        <h2 align="middle">Part 2: Metals!</h2>
+        <h3 align = "middle">Overview</h3>
+        <p>
+            Similar to part 1, we followed the spec implementing the functions as specified.
+            There was some research involved including functions for calculating thetah and converting to cartesian coordinates.
+            Part 2 proved trickier than part 1 since there was more math involved.
+            Debugging was particularly frustrating because we had implemented several smaller details incorrectly.
+            For instance, we initially found eta and k instead of using the variables.
+            Another bug involved checking the validity of wi and wo too early such that pdf, and wi did not get properly updated.
+        </p>
+
+        <table width="100%">
+            <tr align = "middle">
+                <td>
+                    <img src="images/au_dragon_0.005.png" width="400px" align="middle"/>
+                    <figcaption align="middle">Dragon with 0.005 alpha</figcaption>
+                </td>
+                <td>
+                    <img src="images/au_dragon_0.05.png" width="400px" align="middle"/>
+                    <figcaption align="middle">Dragon with 0.05 alpha</figcaption>
+                </td>
+            </tr>
+            <tr align="Middle">
+
+                <td>
+                    <img src="images/au_dragon_0.25.png" width="400px" align="middle"/>
+                    <figcaption align="middle">Dragon with 0.25 alpha</figcaption>
+                </td>
+
+                <td>
+                    <img src="images/au_dragon_0.5.png" width="400px" align="middle"/>
+                    <figcaption align="middle">Dragon with 0.5 alpha</figcaption>
+                </td>
+            </tr>
+
+        </table>
+
+        <p> From the images, you can see the consequences of the dragons surface get rougher and rougher.
+            With a smaller alpha, the surface was smoother so the dragon was much more reflective.
+            As alpha increased, the surface was less reflective until you get a shiny matte looking dragon. </p>
+        <table width="100%">
+            <tr align = "middle">
+                <td>
+                    <img src="images/cu_bunny_default.png" width="400px" align="middle"/>
+                    <figcaption align="middle">Bunny using default sampling</figcaption>
+                </td>
+                <td>
+                    <img src="images/cu_bunny_default_rate.png" width="400px" align="middle"/>
+                    <figcaption align="middle">Rate</figcaption>
+                </td>
+
+            </tr>
+            <tr align = "middle">
+                <td>
+                    <img src="images/cu_bunny_code.png" width="400px" align="middle"/>
+                    <figcaption align="middle">Bunny using our sampling</figcaption>
+                </td>
+                <td>
+                    <img src="images/cu_bunny_code_rate.png" width="400px" align="middle"/>
+                    <figcaption align="middle">Rate</figcaption>
+                </td>
+            </tr>
+        </table>
+        <p> The bunny using cosine hemisphere sampling had a lot more noise. There were more dark spots since the image was more evenly sampled.
+            Integrating importance sampling produced a smoother bunny object and less noise in the image since the sampling considered more important light rays that contribute to the image.
+        </p>
+        <p> We tailored our spheres to be chromium!</p>
+
+        <table width="100%">
+            <tr align = "middle">
+                <td>
+                    <img src="images/chromium_spheres.png" width="400px" align="middle"/>
+                    <figcaption align="middle">Chromium Spheres!</figcaption>
+                </td>
+                <td>
+                    <img src="images/chromium_spheres_rate.png" width="400px" align="middle"/>
+                    <figcaption align="middle">Rate</figcaption>
+                </td>
+
+            </tr>
+        </table>
+
+        <p> David and I did our best to split up the work and effort.
+            David had an M1 so it was more difficult for him to debug locally.
+            However, Alina primarily coded part 1 and David primarily coded for part 2.
+            And we both helped debug both parts together!
+        </p>
+    </div>
+</body>
 </html>
+
+
+
+
