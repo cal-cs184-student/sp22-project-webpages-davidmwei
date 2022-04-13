@@ -1,7 +1,493 @@
-<html>
-	<head>
-	</head>
-	<body>
-		Project 4 here
-	</body>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+<head>
+<style>
+  body {
+    padding: 50px;
+    width: 1100px;
+    margin: auto;
+    text-align: left;
+    font-weight: 300;
+    font-family: 'Open Sans', sans-serif;
+    color: #121212;
+  }
+  h1, h2, h3, h4 {
+    font-family: 'Source Sans Pro', sans-serif;
+  }
+</style>
+<title>CS 184 Mesh Editor</title>
+<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+<link href="https://fonts.googleapis.com/css?family=Open+Sans|Source+Sans+Pro" rel="stylesheet">
+</head>
+
+
+<body>
+
+<h1 align="middle">CS 184: Computer Graphics and Imaging, Spring 2022</h1>
+<h1 align="middle">Project 4: Cloth Simulator</h1>
+<h2 align="middle">David Wei & Alina Wang, CS184-!!</h2>
+
+<br><br>
+
+<div>
+
+<h2 align="middle">Overview</h2>
+<p>In this project, we were tasked with implementing a spring representation of a cloth object. We had to setup the structure of the object using springs and point masses, and then learned how to collide them with other objects (including itself).
+Finally, we had to dabble with OpenGL to create shaders and shading effects.</p>
+<p>The most challenging part of this project was in managing pointers and addresses. There were times where we would forget to dereference our point masses, or call copies of point masses instead of the point mass itself. This would lead to errors where
+our changes would not take affect, or in the case of self-collisions, duplicate point-masses. The map also introduced many challenges, as initializing it with pointers to pointers was quite difficult to figure out. Aside from that, the vector
+arithmetic was challenging to understand at first, but became much easier throughout the project.</p>
+<p>We worked well as a team, contributing equally to the codebase/debugging. It was often the case where after pair programming, one of us would be confused by a certain line of code, which would end up introducing a bug. This allowed us to debug
+quite efficiently.</p>
+
+<h2 align="middle">Part 1: Masses and springs</h2>
+<table width="100%">
+    <tr align="Middle">
+        <td>
+            <img src="images/P1_zoom0.png" width="400px" align="middle"/>
+            <figcaption align="middle">Mesh full view</figcaption>
+        </td>
+
+        <td>
+            <img src="images/P1_zoom1.png" width="400px" align="middle"/>
+            <figcaption align="middle">More zoomed in...</figcaption>
+        </td>
+    </tr>
+    <tr align="Middle">
+        <td>
+            <img src="images/P1_zoom2.png" width="400px" align="middle"/>
+            <figcaption align="middle">Even more zoomed in...</figcaption>
+        </td>
+        <td>
+            <img src="images/P1_zoom3.png" width="400px" align="middle"/>
+            <figcaption align="middle">Zoomed in a LOT</figcaption>
+        </td>
+    </tr>
+</table>
+<p>In Part 1, we generated the spring representation of a cloth mesh. We generated the number of point masses as specified by num_width_points and num_height_points.
+We made sure to set them appropriately within the given gridspace, however, since we accidentally skipped this step on our first implementation and were unable to see the entire
+mesh.</p>
+<p>Using pointers was a little tricky, but after correctly placing the point masses it was not too difficult to add the springs and appropriate constraints. We were able to
+locate point masses using the 2D indexing trick we learned in past projects and would store the "neighbor" point mass positions in Vector3Ds to make spring creation easier.</p>
+<table width="100%">
+    <tr align="Middle">
+        <td>
+            <img src="images/P1_pinned2_noshear.png" width="350px" align="middle"/>
+            <figcaption align="middle">Mesh without any shearing constraints</figcaption>
+        </td>
+
+        <td>
+            <img src="images/P1_pinned2_sheer.png" width="350px" align="middle"/>
+            <figcaption align="middle">Mesh with only shearing constraints</figcaption>
+        </td>
+        <td>
+            <img src="images/P1_pinned2_all.png" width="350px" align="middle"/>
+            <figcaption align="middle">Mesh with all constraints</figcaption>
+        </td>
+    </tr>
+</table>
+</div>
+
+<br>
+
+<div>
+    <h2 align="middle">Part 2: Simulation vs Numerical Integration</h2>
+    <table width="100%">
+        <tr align="middle" >
+            <td>
+                <img src="images/pinned2_start_high_ks.png" width="350px"/>
+                <figcaption align="middle">High ks = 100000 N/m</figcaption>
+            </td>
+            <td>
+                <img src="images/pinned2_middle_high_ks.png" width="350px"/>
+                <figcaption align="middle">High ks = 100000 N/m</figcaption>
+            </td>
+            <td>
+                <img src="images/pinned_2_end_high_ks.png" width="350px"/>
+                <figcaption align="middle">High ks N/m</figcaption>
+            </td>
+        </tr>
+        <tr align="Middle">
+            <td>
+                <img src="images/pinned2_start_low_ks.png" width="350px" />
+                <figcaption align="middle">Start: Low ks = 500 N/m</figcaption>
+            </td>
+            <td>
+                <img src="images/pinned2_middle_low_ks.png" width="350px" />
+                <figcaption align="middle">Middle: Low ks = 500 N/m</figcaption>
+            </td>
+            <td>
+                <img src="images/pinned2_end_low_ks.png" width="350px"/>
+                <figcaption align="middle">End: Low ks = 500 = N/m</figcaption>
+            </td>
+        </tr>
+    </table>
+
+
+    <p> Low ks = 500 N/m. High ks = 100000 N/m. Default = 5000 N/m.</p>
+
+    <p>
+        A lower spring constant means that the material is easier to stretch while higher spring constant means the material is harder to stretch.
+        From our images, you can see in the higher ks simulation where the cloth looks closer to paper falling onto a wall. The cloth has less ripples overall as it falls.
+        In their resting states, you can see the difference in stretchiness. WHere the cloth with a lower ks looks like it's sagging a bit and not perfectly in a square.
+        Whereas the cloth with a higher ks looks more square and has less ripples at resting than the default settings.
+    </p>
+
+    <br>
+    <table width="100%">
+        <tr align="middle" >
+            <td>
+                <img src="images/pinned2_start_high_density.png" width="350px"/>
+                <figcaption align="middle">Start High Density = 300 g/cm^2</figcaption>
+            </td>
+            <td>
+                <img src="images/pinned2_middle_high_density.png" width="350px"/>
+                <figcaption align="middle">Middle High Density = 300 g/cm^2</figcaption>
+            </td>
+            <td>
+                <img src="images/pinned2_end_high_density.png" width="350px"/>
+                <figcaption align="middle">End High Density = 300 g/cm^2</figcaption>
+            </td>
+         </tr>
+        <tr align="Middle">
+            <td>
+                <img src="images/pinned2_start_low_density.png" width="350px" />
+                <figcaption align="middle">Start Low Density = 1 g/cm^2</figcaption>
+            </td>
+            <td>
+                <img src="images/pinned2_middle_low_density.png" width="350px" />
+                <figcaption align="middle">Middle Low Density = 1 g/cm^2</figcaption>
+            </td>
+            <td>
+                <img src="images/pinned2_end_low_density.png" width="350px" align="middle"/>
+                <figcaption align="middle">End Low Density = 1 g/cm^2<</figcaption>
+            </td>
+        </tr>
+    </table>
+
+    <p> Low Density = 1 g/cm^2. High Density = 300 g/cm^2. Default = 15 g/cm^2</p>
+    <p>
+        A higher density means the material is heavier. And vice versa.
+        The cloth with the higher density falls with more downward motion. Whereas the cloth with lower density lays itself against the plane.
+        In the resting state, you can see the cloth with higher density sagging more. Whereas the one with lower density closer to a square shape with less ripples.
+    </p>
+
+    <br>
+
+    <table width="100%">
+        <tr align="middle" >
+            <td>
+                <img src="images/pinned2_start_high_damping.png" width="350px"/>
+                <figcaption align="middle">High Damping Start</figcaption>
+            </td>
+            <td>
+                <img src="images/pinned2_middle_high_damping.png" width="350px"/>
+                <figcaption align="middle">High Damping Middle</figcaption>
+            </td>
+            <td>
+                <img src="images/pinned2_end_high_damping.png" width="350px"/>
+                <figcaption align="middle">High Damping End</figcaption>
+            </td>
+        </tr>
+        <tr align="Middle">
+            <td>
+                <img src="images/pinned2_start_low_damping.png" width="350px" />
+                <figcaption align="middle">Low Damping Start</figcaption>
+            </td>
+            <td>
+                <img src="images/pinned2_middle_low_damping.png" width="350px" />
+                <figcaption align="middle">Low Damping Middle</figcaption>
+            </td>
+            <td>
+                <img src="images/pinned2_end_low_damping.png" width="350px" align="middle"/>
+                <figcaption align="middle">Low Damping End</figcaption>
+            </td>
+        </tr>
+    </table>
+
+    <p> Low damping = 0.068966. High Damping = 1.0. Default = 0.2.</p>
+
+    <p>
+        A lower damping rate means less energy is lost during the motion. So the one with a higher damping rate has the most energy loss as the cloth falls.
+        Which is why the cloth with higher damping falls much slower. And it comes to rest on the plane. The cloth with a lower damping rate has less energy loss as it falls.
+        So it falls much faster, with more rippling across the cloth as it falls.
+        It also falls past the plane, as can be seen in the last photo of our lower damping simulation, and sways back and forth along the plane.
+        Before coming to a rest like in the higher damping simulation rest state.
+    </p>
+
+<br>
+
+    <table width="100%">
+        <tr align="middle" >
+            <td>
+                <img src="images/pinned4_resting_state.png" width="400px"/>
+                <figcaption align="middle">Pinned4.json at Resting State!</figcaption>
+            </td>
+            <td>
+                <img src="images/pinned4_resting_state1.png" width="400px"/>
+                <figcaption align="middle">Pinned4.json at Resting State!</figcaption>
+            </td>
+        </tr>
+    </table>
+
+
+</div>
+
+<br>
+
+<div>
+    <h2 align="middle">Part 3: Handling Collisions with other objects</h2>
+    <table width="100%">
+        <tr align="middle" >
+            <td>
+                <img src="images/part3_default.png" width="400px"/>
+                <figcaption align="middle">Sphere collision</figcaption>
+            </td>
+            <td>
+                <img src="images/part3_plane.png" width="400px"/>
+                <figcaption align="middle">Plane collision (wireframe)</figcaption>
+            </td>
+        </tr>
+    </table>
+    <p>In part 3, we were tasked with handling collisions between our mesh and other objects.</p>
+    <p>Implementing sphere collision was not too challenging, since we were given a point and radius calculating the bounds of the sphere was relatively simple.
+    We would check if the distance between a point mass and the origin of the sphere was within the radius of the sphere, and if it was, would bump the point mass to the surface.</p>
+    <p>Implementing plane collision was much more difficult. It took us a bit of time to figure out how to calculate the intersection point between a point mass in the mesh and the plane.
+    We had to review our knowledge of plane geometry, and derived a way to pull out a variable t in accordance with lines in 3D space.</p>
+    <table width="100%">
+        <tr align="middle" >
+            <td>
+                <img src="images/part3_derivation.png" width="700px"/>
+                <figcaption align="middle">Derivation of intersection point, note that xyz_1 should be direction and not point.</figcaption>
+            </td>
+        </tr>
+    </table>
+    <p>After implementation, here are some of our simulations with ks set to different values! Also here are some different shaders using part 5.</p>
+    <table width="100%">
+        <tr align="middle" >
+            <td>
+                <img src="images/part3_default.png" width="350px"/>
+                <figcaption align="middle">Default ks = 5000</figcaption>
+            </td>
+            <td>
+                <img src="images/part3_ks_500.png" width="350px"/>
+                <figcaption align="middle">ks = 500</figcaption>
+            </td>
+            <td>
+                <img src="images/part3_ks_50000.png" width="350px"/>
+                <figcaption align="middle">ks = 50000</figcaption>
+            </td>
+        </tr>
+        <tr align="middle">
+            <td>
+                <img src="images/part3_texture_plane.png" width="350px"/>
+                <figcaption align="middle">Plane with texture mapping shader</figcaption>
+            </td>
+            <td>
+                <img src="images/part3_mirror_plane.png" width="350px"/>
+                <figcaption align="middle">Plane with mirror shader</figcaption>
+            </td>
+        </tr>
+    </table>
+</div>
+
+<br>
+<div>
+    <h2 align="middle">Part 4: Handling Self-Collisions</h2>
+    <table width="100%">
+        <tr align="middle" >
+            <td>
+                <img src="images/part4_default_start.png" width="350px"/>
+                <figcaption align="middle">Start Default Settings</figcaption>
+            </td>
+            <td>
+                <img src="images/part4_default_middle.png" width="350px"/>
+                <figcaption align="middle">Middle Default Settings</figcaption>
+            </td>
+            <td>
+                <img src="images/part4_default_end.png" width="350px"/>
+                <figcaption align="middle">End Default Settings</figcaption>
+            </td>
+        </tr>
+    </table>
+    <p>In part 4, we were tasked with implementing self collisions.</p>
+    <p>This part was challenging in the construction of our map / 3d boxes, since the vector arithmetic at the end built upon our previous knowledge. We were struggling
+    for quite some time with correct pointer and vector initialization, which would cause our map to either not populate correctly and throw seg-faults, or populate duplicate point masses.
+    After figuring out the map, however, the rest of the implementation became relatively straightforward.</p>
+    <p>As you can see above, our cloth will fold over itself as it falls onto the plane. Although our end rest state is slightly different than spec, the behavior is identical.
+    It rests upon the plane and will slowly unravel a corner, but only within 10 to 20 seconds. It will come to a rest, but has the slight jiggle effect of jelly.</p>
+
+    <br>
+    <h3 align = "middle"> Changing Density and ks</h3>
+    <table width="100%">
+        <tr align="middle" >
+            <td>
+                <img src="images/part4_start_high_density.png" width="350px"/>
+                <figcaption align="middle">Start Density = 300 g/cm^2</figcaption>
+            </td>
+            <td>
+                <img src="images/part4_middle_high_density.png" width="350px"/>
+                <figcaption align="middle">Middle Density = 300 g/cm^2</figcaption>
+            </td>
+            <td>
+                <img src="images/part4_end_high_density.png" width="350px"/>
+                <figcaption align="middle">End Density = 300 g/cm^2</figcaption>
+            </td>
+        </tr>
+        <tr align="middle" >
+            <td>
+                <img src="images/part4_start_low_density.png" width="350px"/>
+                <figcaption align="middle">Start Density = 1 g/cm^2</figcaption>
+            </td>
+            <td>
+                <img src="images/part4_middle_low_density.png" width="350px"/>
+                <figcaption align="middle">Middle Density = 1 g/cm^2</figcaption>
+            </td>
+            <td>
+                <img src="images/part4_end_low_density.png" width="350px"/>
+                <figcaption align="middle">End Density = 1 g/cm^2</figcaption>
+            </td>
+        </tr>
+    </table>
+    <p>In the images above, you will notice that when we change the density parameter, there is an inverse relationship between density and number of observable folds/ripples.
+    With a higher density of 300 g/cm2, there are many folds and ripples as the cloth falls onto the plane. With a density of 1 g/cm2, however, there are much less ripples and folds.
+    If anything, the density appears to correlate with rigidity. The less dense, the more rigid, the more dense, the less rigid. The 1 g/cm2 looks more like an actual cloth, while the 300 g/cm2
+    looks more like jelly or rice paper.</p>
+
+    <table width="100%">
+        <tr align="middle" >
+            <td>
+                <img src="images/part4_start_high_ks.png" width="350px"/>
+                <figcaption align="middle">Start ks = 100000</figcaption>
+            </td>
+            <td>
+                <img src="images/part4_middle_high_ks.png" width="350px"/>
+                <figcaption align="middle">Middle ks = 100000</figcaption>
+            </td>
+            <td>
+                <img src="images/part4_end_high_ks.png" width="350px"/>
+                <figcaption align="middle">End ks = 100000</figcaption>
+            </td>
+        </tr>
+
+        <tr align="middle">
+            <td>
+                <img src="images/part4_start_low_ks.png" width="350px"/>
+                <figcaption align="middle">Start ks = 500</figcaption>
+            </td>
+            <td>
+                <img src="images/part4_middle_low_ks.png" width="350px"/>
+                <figcaption align="middle">Middle ks = 500</figcaption>
+            </td>
+            <td>
+                <img src="images/part4_end_low_ks.png" width="350px"/>
+                <figcaption align="middle">End ks = 500</figcaption>
+            </td>
+        </tr>
+    </table>
+    <p>In the figures above, we change the ks instead of the density. The effect that ks has on the cloth is similar to the effect that density has on the cloth,
+    except where the rigidity/folds/ripples have an inverse relationship with density, they appear to have a direct relationship with ks. As ks grows larger, there are less folds and
+    the cloth seems more rigid. Likewise, with a lower ks, the ripples are more apparent and the cloth seems less rigid. </p>
+
+
+</div>
+
+
+<br>
+<div>
+    <h2 align="middle">Part 5: Shaders</h2>
+
+
+    <p>
+        Shader programs run in parallel with GPUs while telling the computer how to render a pixel.
+        Fragment shaders compute what color to color each pixel. Vertex shaders compute the location of vertices and producing any physical details
+        such as the normal vector. Together, the shaders produce the required details to render live images correctly.
+    </p>
+
+    <br>
+
+    <table width="100%">
+        <tr align="middle" >
+            <td>
+                <img src="images/ambient.png" width="400px"/>
+                <figcaption align="middle">Ambient Lighting Only</figcaption>
+            </td>
+            <td>
+                <img src="images/diffuse.png" width="400px"/>
+                <figcaption align="middle">Diffuse Lighting Only</figcaption>
+            </td>
+        </tr>
+
+        <tr align="middle">
+            <td>
+                <img src="images/specular.png" width="400px"/>
+                <figcaption align="middle">Specular Lighting Only</figcaption>
+            </td>
+            <td>
+                <img src="images/Blinn-phong.png" width="400px"/>
+                <figcaption align="middle">Complete Blinn Phong Model</figcaption>
+            </td>
+        </tr>
+    </table>
+
+    <p>
+        Blinn Phong Shading Model: Light can be modeled as a combination of 3 types of lighting: specular, ambient, and diffuse.
+        Calculating the correct amount of light reflected in a specific direction (specular light) requires calculating the halfway vector (the vector halfway between the view direction and light directon).
+        As a result, the closer the halfway vector is to the normal, the more specular contribution there will be.
+    </p>
+
+    <br>
+
+    <table width="100%">
+        <tr align="middle" >
+            <td>
+                <img src="images/texture.png" width="400px"/>
+                <figcaption align="middle">My own Texture!</figcaption>
+            </td>
+        </tr>
+    </table>
+
+    <br>
+
+    <table width="100%">
+        <tr align="middle" >
+            <td>
+                <img src="images/Bump.png" width="400px"/>
+                <figcaption align="middle">Cloth Bump with our Texture</figcaption>
+            </td>
+            <td>
+                <img src="images/Ball_bump.png" width="400px"/>
+                <figcaption align="middle">Ball Bump with our texture</figcaption>
+            </td>
+        </tr>
+        <tr align="middle" >
+            <td>
+                <img src="images/displacement.png" width="400px"/>
+                <figcaption align="middle">Cloth Displacement with our Texture</figcaption>
+            </td>
+            <td>
+                <img src="images/Ball_displacement.png" width="400px"/>
+                <figcaption align="middle">Ball Displacement with our texture</figcaption>
+            </td>
+        </tr>
+    </table>
+
+    <p>
+        Having run the -o 16 -a 16 and -o 128 -a 128 command several times, our the cloth reacts the same under both settings.
+        However, the sphere shape looks smoother and rounder using 128 instead of 16.
+        Regardless of smoothness or roundness, the cloth still falls onto the ball in the same manner under both settings.
+    </p>
+
+    <table width="100%">
+        <tr align="middle" >
+            <td>
+                <img src="images/mirror.png" width="400px"/>
+                <figcaption align="middle">Mirror!</figcaption>
+            </td>
+
+        </tr>
+    </table>
+
+</div>
+</body>
 </html>
